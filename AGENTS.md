@@ -42,9 +42,9 @@ npm run build               # pastikan build frontend sukses
 
 ## Aturan multi-tenant (KRITIS)
 
-1. Semua tabel bisnis (`categories`, `products`, `stock_movements`, `orders`, `order_items`, `payments`) punya kolom `store_id`.
+1. Semua tabel bisnis (`store_members`, `categories`, `products`, `product_option_groups`, `product_options`, `stock_movements`, `orders`, `order_items`, `order_item_options`, `payments`) punya kolom `store_id`.
 2. Semua model bisnis memakai trait `BelongsToStore`: global scope yang memfilter `store_id` toko aktif, dan mengisi `store_id` otomatis saat `creating`.
-3. Jangan pernah query model bisnis tanpa scope. `withoutGlobalScopes()` hanya boleh di area admin platform dan wajib diberi komentar alasan.
+3. Jangan pernah query model bisnis tanpa scope. `withoutGlobalScopes()` hanya boleh di area developer platform untuk kebutuhan pengelolaan lintas toko dan wajib diberi komentar alasan.
 4. Route model binding harus lewat scope, sehingga ID milik toko lain menghasilkan 404.
 5. Setiap controller memakai Policy. Cek peran dan kepemilikan toko di Policy, bukan di view.
 6. **Setiap fitur baru wajib punya test lintas toko**: user toko A tidak bisa melihat, mengubah, atau menghapus data toko B.
@@ -52,17 +52,28 @@ npm run build               # pastikan build frontend sukses
 ## Peran
 
 - `owner`: akses penuh ke tokonya (produk, laporan, kasir, pembatalan transaksi, profil toko)
-- `cashier`: hanya layar kasir, melihat produk, dan riwayat transaksi miliknya; tidak boleh melihat laporan atau mengubah harga
-- `admin platform`: flag `is_admin` di tabel `users`, hanya untuk panel admin sederhana
+- `admin`: mengelola produk, kategori, stok, transaksi, dan laporan; tidak dapat mengubah pengaturan toko atau anggota
+- `cashier`: layar kasir, melihat produk dan riwayat transaksi miliknya, serta menyesuaikan stok dengan alasan; tidak boleh melihat laporan atau mengubah harga/produk
+- `developer`: flag `is_developer` di tabel `users`, pengelola platform yang tidak memiliki toko dan tidak menjadi anggota toko.
 
 ## Autentikasi
 
 - Login email + kata sandi (Breeze) dan **login Google** (Socialite).
 - Kolom `users.google_id` nullable; `users.password` nullable untuk akun yang hanya memakai Google.
 - Alur Google: callback mencari user berdasarkan `google_id`, lalu berdasarkan email; jika belum ada, buat user baru dengan email terverifikasi. Jika email sudah terdaftar, hubungkan `google_id` ke akun itu.
-- Setelah login, user yang belum punya toko diarahkan ke `/onboarding/store` (middleware).
+- Setelah pendaftaran dan verifikasi email (untuk pendaftaran email), calon pemilik diarahkan membuat toko di `/onboarding/store`, lalu melihat halaman status persetujuan. Pemilik hanya mendapat akses penuh setelah disetujui developer.
+- Akun Google yang baru dibuat juga berstatus `pending`; akun yang dibuat lewat pendaftaran atau Google tidak pernah otomatis atau dapat menjadi developer.
 - Environment variable: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
 - Rate limiting pada login, dan jangan pernah mencatat token atau secret ke log.
+
+## Persetujuan akun dan developer
+
+- Middleware `EnsureAccountApproved` membatasi pemilik yang statusnya bukan `approved` ke form onboarding toko (jika belum memiliki toko), halaman status akun, dan logout. Akses ke halaman lain diarahkan ke halaman status akun. Status `rejected` menampilkan alasan penolakan.
+- Jika pemilik berstatus `suspended`, pemilik dan seluruh admin serta kasir tokonya tidak dapat memakai aplikasi. Akun admin dan kasir yang dibuat pemilik tidak memerlukan persetujuan developer; status akses mereka mengikuti status pemilik tokonya.
+- Middleware `EnsureDeveloper` melindungi panel `/developer/*`. Rute tersebut harus menjawab 404, bukan 403, untuk pengguna non-developer.
+- Setiap keputusan developer (approve, reject, suspend, reactivate) wajib dicatat ke `developer_audit_logs`. Log bersifat append-only: baris tidak boleh diubah atau dihapus.
+- Developer tidak pernah diwakili di `store_members`, tidak memiliki toko, dan tidak tunduk pada global scope toko. Pengecualian lintas toko hanya dilakukan untuk fungsi panel developer yang memang memerlukannya.
+- Akun developer hanya boleh dibuat lewat perintah Artisan `developer:create`, dengan kata sandi diminta secara interaktif. Dilarang menaruh kredensial developer di seeder, README, atau file lain di repo karena repo ini publik. Akun developer selalu berstatus `approved`.
 
 ## Pembayaran (Midtrans)
 
@@ -70,14 +81,14 @@ npm run build               # pastikan build frontend sukses
 - Webhook di `POST /webhooks/midtrans`: kecualikan dari CSRF, **verifikasi `signature_key`** (SHA512 dari `order_id + status_code + gross_amount + server_key`), dan tolak jika tidak cocok.
 - Webhook harus **idempoten**: notifikasi ganda tidak boleh membuat pencatatan atau pengurangan stok ganda.
 - Status order: `pending`, `paid`, `expired`, `failed`, `cancelled`. Transisi status didefinisikan di satu tempat (enum + method di model), bukan tersebar.
-- Stok berkurang saat order menjadi `paid` (nontunai) atau saat checkout tunai selesai.
+- Stok hanya berkurang untuk produk `track_stock=true`, saat order menjadi `paid` (nontunai) atau saat checkout tunai selesai. Produk `track_stock=false` tidak menghasilkan pergerakan stok.
 
 ## Konsistensi data
 
-- Pembuatan order + pengurangan stok + pencatatan `stock_movements` dalam satu `DB::transaction`.
-- Gunakan `lockForUpdate()` pada baris produk agar stok tidak minus saat dua kasir menjual barang yang sama.
-- Uang disimpan sebagai **integer rupiah** (tanpa desimal/float).
-- `order_items` menyimpan snapshot nama dan harga produk saat transaksi.
+- Pembuatan order, perubahan stok produk yang dilacak, dan pencatatan `stock_movements` dilakukan dalam satu `DB::transaction`. Produk `track_stock=false` tidak mengubah stok dan tidak membuat pergerakan stok.
+- Gunakan `lockForUpdate()` pada baris produk yang stoknya dilacak agar stok tidak minus saat dua kasir menjual barang yang sama.
+- Uang disimpan sebagai **integer rupiah** (tanpa desimal/float); selisih harga opsi boleh bertanda positif atau negatif.
+- `order_items` menyimpan snapshot nama produk, harga satuan final, dan catatan; `order_item_options` menyimpan snapshot nama grup, nama opsi, dan selisih harga tanpa relasi ke `product_options`.
 
 ## Konvensi kode
 
@@ -87,6 +98,13 @@ npm run build               # pastikan build frontend sukses
 - Mobile first: desain mulai dari lebar 360 px, target sentuh minimal 44 px, navigasi bawah (bottom nav) untuk kasir.
 - Tanpa library tambahan (composer atau npm) tanpa izin. Jika perlu, jelaskan alasannya dan tunggu persetujuan.
 - Komentar hanya untuk "kenapa", bukan "apa".
+
+## Konvensi UI
+
+- Jangan hard-code warna langsung di Blade atau CSS, termasuk nilai hex, kelas warna Tailwind seperti `bg-green-500`, maupun arbitrary color classes.
+- Gunakan hanya token semantik `primary-50` sampai `primary-900`, `accent`, `surface`, `text`, `border`, `success`, `warning`, dan `danger`. Token dipetakan melalui CSS variables dari tema toko atau default design system.
+- Jangan hard-code nilai warna token di komponen. Nilai dari tema tersimpan, preset, atau default design system hanya diterapkan ke CSS variables token di root aplikasi; komponen memakai token tersebut.
+- Tema v1 hanya mode terang. Teks normal di atas warna `primary` harus memenuhi rasio kontras WCAG AA minimal 4.5:1.
 
 ## Larangan
 

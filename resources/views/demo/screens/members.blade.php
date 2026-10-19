@@ -1,0 +1,4 @@
+<div class="space-y-4">
+    <x-ui.card><div class="flex items-center justify-between gap-3"><div><h2 class="font-semibold text-text">Kelola kasir</h2><p class="text-sm text-muted">Anggota yang dapat melayani transaksi.</p></div><x-ui.button>Tambah kasir</x-ui.button></div></x-ui.card>
+    <x-ui.card padding="p-0"><ul class="divide-y divide-border">@foreach($demo['members'] as $member)<li class="flex min-h-16 items-center gap-3 p-3"><div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 font-semibold text-primary-700">{{ substr($member['name'], 0, 1) }}</div><div class="min-w-0 flex-1"><p class="font-medium text-text">{{ $member['name'] }}</p><p class="truncate text-xs text-muted">{{ $member['email'] }} · {{ $member['role'] }}</p></div><x-ui.badge variant="{{ $member['active'] ? 'success' : 'muted' }}">{{ $member['active'] ? 'Aktif' : 'Nonaktif' }}</x-ui.badge></li>@endforeach</ul></x-ui.card>
+</div>

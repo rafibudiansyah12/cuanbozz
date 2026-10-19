@@ -1,0 +1,5 @@
+<div class="space-y-4">
+    <div class="flex items-center justify-between"><div><h2 class="font-semibold text-text">Riwayat pergerakan stok</h2><p class="text-sm text-muted">Perubahan stok contoh untuk toko ini</p></div><x-ui.button href="/demo/stock-adjustment{{ $query }}">Sesuaikan stok</x-ui.button></div>
+    <x-ui.select label="Filter produk" name="product_filter"><option>Semua produk</option>@foreach($demo['products'] as $product)<option>{{ $product['name'] }}</option>@endforeach</x-ui.select>
+    <x-ui.card padding="p-0"><ul class="divide-y divide-border">@foreach($demo['movements'] as $movement)<li class="flex min-h-16 items-center justify-between gap-3 p-3"><div><p class="text-sm font-semibold text-text">{{ $movement['product'] }}</p><p class="text-xs text-muted">{{ $movement['type'] }} · {{ $movement['actor'] }} · {{ $movement['time'] }}</p></div><div class="text-right"><p class="font-semibold {{ $movement['quantity'] > 0 ? 'text-success' : 'text-text' }}">{{ $movement['quantity'] > 0 ? '+' : '' }}{{ $movement['quantity'] }}</p><p class="text-xs text-muted">sisa {{ $movement['after'] }}</p></div></li>@endforeach</ul></x-ui.card>
+</div>

@@ -1,0 +1,7 @@
+<x-developer-layout :navigation-items="$navigation">
+    <div class="space-y-4">
+        <div><h1 class="text-2xl font-bold text-text">Pengguna</h1><p class="text-sm text-muted">Daftar pemilik dan kasir platform.</p></div>
+        <x-ui.card><form method="GET" class="flex flex-col gap-3 sm:flex-row"><x-ui.input class="flex-1" label="Cari pengguna atau toko" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Nama, email, toko" /><x-ui.button type="submit" class="sm:self-end">Cari</x-ui.button></form></x-ui.card>
+        <x-ui.card padding="p-0">@if($users->isEmpty())<x-ui.empty-state class="p-5" title="Pengguna tidak ditemukan" description="Ubah kata pencarian." />@else<ul class="divide-y divide-border">@foreach($users as $user)<li class="flex items-center justify-between gap-3 p-4"><div class="min-w-0"><p class="truncate font-semibold text-text">{{ $user->name }}</p><p class="truncate text-sm text-muted">{{ $user->email }}</p><p class="truncate text-xs text-muted">{{ $user->ownedStores->first()?->name ?? 'Tidak memiliki toko' }}</p></div><x-ui.badge :variant="match($user->approval_status) { \App\Enums\AccountApprovalStatus::Approved => 'success', \App\Enums\AccountApprovalStatus::Pending => 'warning', default => 'danger' }">{{ $user->approval_status->value }}</x-ui.badge></li>@endforeach</ul>@endif<div class="border-t border-border p-4">{{ $users->links() }}</div></x-ui.card>
+    </div>
+</x-developer-layout>

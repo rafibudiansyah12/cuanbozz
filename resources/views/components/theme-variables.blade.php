@@ -1,0 +1,1 @@
+<style>:root { {!! $declarations !!} }</style>
