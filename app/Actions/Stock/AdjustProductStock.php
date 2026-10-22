@@ -6,6 +6,7 @@ use App\Enums\StockMovementType;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Store;
+use App\Models\StoreActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -26,7 +27,8 @@ class AdjustProductStock
                 ]);
             }
 
-            $newStock = $product->stock + $quantity;
+            $previousStock = $product->stock;
+            $newStock = $previousStock + $quantity;
 
             if ($newStock < 0) {
                 throw ValidationException::withMessages([
@@ -50,6 +52,17 @@ class AdjustProductStock
                 'quantity' => $quantity,
                 'stock_after' => $newStock,
                 'reason' => trim($reason),
+            ]);
+
+            StoreActivityLog::query()->create([
+                'store_id' => $store->id,
+                'user_id' => $user->id,
+                'action' => 'stock.adjusted',
+                'subject_type' => 'product',
+                'subject_id' => $product->id,
+                'subject_name' => $product->name,
+                'description' => 'Mengubah stok dari '.$previousStock.' menjadi '.$newStock.' '.$product->unit,
+                'details' => ['before' => $previousStock, 'after' => $newStock, 'quantity' => $quantity, 'reason' => trim($reason)],
             ]);
 
             return $product->refresh();

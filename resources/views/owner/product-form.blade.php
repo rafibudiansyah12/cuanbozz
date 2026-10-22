@@ -11,7 +11,7 @@
                 <x-ui.input name="price" label="Harga jual (rupiah)" type="number" :value="old('price')" min="0" step="1" inputmode="numeric" placeholder="25000" required />
                 <x-ui.input name="unit" label="Satuan" :value="old('unit', 'pcs')" placeholder="pcs, gelas, porsi" required />
                 <x-ui.input name="stock" label="Stok awal" type="number" :value="old('stock', 0)" min="0" step="1" inputmode="numeric" x-bind:required="trackStock" x-bind:disabled="!trackStock" />
-                <x-ui.input name="low_stock_threshold" label="Peringatan stok menipis" type="number" :value="old('low_stock_threshold', 0)" min="0" step="1" inputmode="numeric" />
+                <x-ui.input name="low_stock_threshold" label="Peringatan stok menipis" type="number" :value="old('low_stock_threshold', 0)" min="0" step="1" inputmode="numeric" x-bind:disabled="!trackStock" />
             </div>
             <x-ui.textarea name="description" label="Deskripsi (opsional)" placeholder="Deskripsi singkat produk">{{ old('description') }}</x-ui.textarea>
             <section x-data="productOptionsForm({ initialGroups: @js(old('option_groups', [])) })" class="space-y-4 rounded-2xl border border-border/70 bg-primary-50/40 p-4 sm:p-5">
@@ -48,9 +48,9 @@
                 </template>
             </section>
             <div class="rounded-2xl border border-border/70 bg-primary-50/60 p-4">
-                <input type="hidden" name="track_stock" value="0">
-                <label class="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-text"><input type="checkbox" name="track_stock" value="1" x-model="trackStock" class="h-5 w-5 rounded border-border text-primary-600 focus:ring-primary-600"><span>Lacak stok produk ini</span></label>
-                <p class="ml-8 text-xs leading-5 text-muted">Stok yang dilacak berkurang otomatis setelah transaksi tunai selesai.</p>
+                <input type="hidden" name="track_stock" :value="trackStock ? '1' : '0'">
+                <label class="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-text"><input type="checkbox" :checked="!trackStock" @change="trackStock = !$event.target.checked" class="h-5 w-5 rounded border-border text-primary-600 focus:ring-primary-600"><span>Stok tidak terbatas</span></label>
+                <p class="ml-8 text-xs leading-5 text-muted">Produk akan selalu tersedia dan stoknya tidak berkurang saat transaksi. Matikan pilihan ini jika jumlah stok perlu dicatat.</p>
             </div>
             <div class="flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
                 <x-ui.button href="{{ route('owner.products') }}" variant="secondary">Batal</x-ui.button>

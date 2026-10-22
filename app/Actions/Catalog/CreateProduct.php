@@ -9,6 +9,7 @@ use App\Models\ProductOption;
 use App\Models\ProductOptionGroup;
 use App\Models\StockMovement;
 use App\Models\Store;
+use App\Models\StoreActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -71,6 +72,17 @@ class CreateProduct
                     ]);
                 }
             }
+
+            StoreActivityLog::query()->create([
+                'store_id' => $store->id,
+                'user_id' => $user->id,
+                'action' => 'product.created',
+                'subject_type' => 'product',
+                'subject_id' => $product->id,
+                'subject_name' => $product->name,
+                'description' => 'Menambahkan produk'.($product->track_stock ? ' dengan stok awal '.$product->stock.' '.$product->unit : ' dengan stok tidak terbatas'),
+                'details' => ['sku' => $product->sku, 'price' => $product->price, 'track_stock' => $product->track_stock],
+            ]);
 
             return $product;
         });

@@ -42,7 +42,7 @@ npm run build               # pastikan build frontend sukses
 
 ## Aturan multi-tenant (KRITIS)
 
-1. Semua tabel bisnis (`store_members`, `categories`, `products`, `product_option_groups`, `product_options`, `stock_movements`, `orders`, `order_items`, `order_item_options`, `payments`) punya kolom `store_id`.
+1. Semua tabel bisnis (`store_members`, `categories`, `products`, `product_option_groups`, `product_options`, `stock_movements`, `store_activity_logs`, `orders`, `order_items`, `order_item_options`, `payments`) punya kolom `store_id`.
 2. Semua model bisnis memakai trait `BelongsToStore`: global scope yang memfilter `store_id` toko aktif, dan mengisi `store_id` otomatis saat `creating`.
 3. Jangan pernah query model bisnis tanpa scope. `withoutGlobalScopes()` hanya boleh di area developer platform untuk kebutuhan pengelolaan lintas toko dan wajib diberi komentar alasan.
 4. Route model binding harus lewat scope, sehingga ID milik toko lain menghasilkan 404.

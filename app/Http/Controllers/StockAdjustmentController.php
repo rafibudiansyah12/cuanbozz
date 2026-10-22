@@ -17,7 +17,7 @@ class StockAdjustmentController extends Controller
             $store,
             $request->user(),
             (int) $request->validated('product_id'),
-            (int) $request->validated('quantity'),
+            (int) $request->validated('quantity') * ($request->validated('direction') === 'out' ? -1 : 1),
             $request->validated('reason'),
         );
 

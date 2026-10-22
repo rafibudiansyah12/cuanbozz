@@ -63,7 +63,7 @@ Banyak UMKM masih mencatat penjualan manual atau memakai aplikasi kasir yang mah
 
 ### 5.3 Produk dan Stok
 
-- CRUD produk: nama, deskripsi, SKU/barcode, kategori, harga jual, foto, satuan (`unit`, default `pcs`), stok, ambang stok menipis, dan pilihan apakah stok dilacak (`track_stock`).
+- CRUD produk: nama, deskripsi, SKU/barcode, kategori, harga jual, foto, satuan (`unit`, default `pcs`), stok, ambang stok menipis, dan pilihan apakah stok dilacak (`track_stock`). Produk dengan stok tidak terbatas selalu tersedia dan tidak mengurangi stok saat transaksi.
 - Pemilik dapat mengatur grup opsi produk dengan tipe pilihan tunggal atau banyak, aturan required/min/max, urutan, dan opsi aktif dengan selisih harga rupiah positif atau negatif.
 - CRUD kategori.
 - Untuk produk dengan `track_stock=true`, stok berkurang saat transaksi selesai dan kembali saat transaksi dibatalkan. Untuk produk dengan `track_stock=false`, stok diabaikan dan transaksi tidak membuat pergerakan stok.
@@ -115,6 +115,12 @@ Banyak UMKM masih mencatat penjualan manual atau memakai aplikasi kasir yang mah
 - **Log Aktivitas**: riwayat keputusan developer (setujui, tolak, tangguhkan, aktifkan kembali), pelaku, target, catatan, dan waktu; log tidak dapat diedit atau dihapus.
 - **Akun Saya**: ubah kata sandi developer.
 - Hanya akun `is_developer=true` yang dapat mengakses `/developer/*`; permintaan oleh non-developer mendapat 404. Developer tidak memiliki toko dan bukan anggota `store_members`.
+
+### 5.8 Log Aktivitas Toko
+
+- Owner dapat melihat maksimal 100 aktivitas toko terbaru beserta nama dan email akun pelaku.
+- Catat penambahan produk, perubahan stok manual beserta alasannya, dan transaksi tunai yang selesai.
+- Log menggunakan snapshot target dan detail seperlunya, terisolasi per toko, serta append-only.
 
 ## 6. Kebutuhan Mobile Friendly
 

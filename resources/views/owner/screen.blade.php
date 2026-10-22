@@ -60,7 +60,7 @@
                                                     <p class="mt-1 text-sm font-bold leading-5 text-primary-700" x-text="formatRupiah(product.price)"></p>
                                                     <p class="mt-1 line-clamp-2 text-xs leading-5 text-muted" x-text="product.description"></p>
                                                     <div class="mt-2 flex flex-wrap items-center gap-2"><span class="inline-flex rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-semibold text-primary-800" x-text="product.category"></span><span class="text-[11px] text-muted" x-text="product.sku"></span></div>
-                                                    <p class="mt-2 text-xs" :class="product.track_stock ? (product.stock <= product.low_stock_threshold ? 'font-semibold text-warning' : 'text-muted') : 'text-muted'" x-text="product.track_stock ? `Stok ${product.stock} ${product.unit}` : 'Stok tidak dilacak'"></p>
+                                                    <p class="mt-2 text-xs" :class="product.track_stock ? (product.stock <= product.low_stock_threshold ? 'font-semibold text-warning' : 'text-muted') : 'text-muted'" x-text="product.track_stock ? `Stok ${product.stock} ${product.unit}` : 'Stok tidak terbatas'"></p>
                                                 </div>
                                             </div>
                                             <div class="mt-3 flex items-center justify-between gap-2 border-t border-border/70 pt-3">
@@ -162,7 +162,7 @@
                                 <article class="rounded-2xl border border-border/70 bg-surface/75 p-4">
                                     @if($product['image_url'])<img src="{{ $product['image_url'] }}" alt="{{ $product['name'] }}" class="mb-3 h-40 w-full rounded-xl object-cover" loading="lazy">@endif
                                     <div class="flex items-start justify-between gap-3"><div class="min-w-0"><h3 class="truncate font-semibold text-text">{{ $product['name'] }}</h3><p class="mt-1 text-xs text-muted">{{ $product['sku'] ?: 'Tanpa SKU' }} · {{ $product['category'] }}</p></div><span class="shrink-0 font-bold text-primary-800">Rp{{ number_format($product['price'], 0, ',', '.') }}</span></div>
-                                    <div class="mt-3 flex items-center justify-between gap-2 border-t border-border/70 pt-3 text-xs"><span class="text-muted">{{ $product['track_stock'] ? "Stok: {$product['stock']} {$product['unit']}" : 'Stok tidak dilacak' }}</span>@if($product['track_stock'] && $product['low_stock'])<span class="rounded-full bg-warning/15 px-2.5 py-1 font-semibold text-warning">Stok menipis</span>@endif</div>
+                                    <div class="mt-3 flex items-center justify-between gap-2 border-t border-border/70 pt-3 text-xs"><span class="text-muted">{{ $product['track_stock'] ? "Stok: {$product['stock']} {$product['unit']}" : 'Stok tidak terbatas' }}</span>@if($product['track_stock'] && $product['low_stock'])<span class="rounded-full bg-warning/15 px-2.5 py-1 font-semibold text-warning">Stok menipis</span>@endif</div>
                                     @if($product['track_stock'])<a href="{{ route('owner.stock-adjustment', ['product' => $product['id']]) }}" class="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-3 text-sm font-semibold text-primary-800 transition hover:bg-primary-50">Sesuaikan stok</a>@endif
                                 </article>
                             @endforeach
@@ -180,7 +180,7 @@
 
             @case('stock-adjustment')
                 <x-ui.card class="mx-auto max-w-2xl space-y-5">
-                    <div><p class="text-sm text-muted">Inventaris</p><h2 class="mt-1 text-xl font-bold text-text">Penyesuaian stok</h2><p class="mt-1 text-sm text-muted">Tambah stok dengan angka positif atau kurangi dengan angka negatif. Wajib isi alasan; perubahan akan tercatat atas nama Anda.</p></div>
+                    <div><p class="text-sm text-muted">Inventaris</p><h2 class="mt-1 text-xl font-bold text-text">Penyesuaian stok</h2><p class="mt-1 text-sm text-muted">Pilih produk, tentukan stok masuk atau keluar, lalu masukkan jumlahnya. Setiap perubahan tercatat atas nama Anda.</p></div>
                     @if(session('status'))<x-ui.toast>{{ session('status') }}</x-ui.toast>@endif
                     @if($errors->any())<div class="rounded-xl border border-danger/20 bg-danger/5 p-3 text-sm text-danger">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
                     <form method="POST" action="{{ route('owner.stock-adjustment.store') }}" class="space-y-4">
@@ -194,10 +194,13 @@
                             </select>
                         </label>
                         @error('product_id')<p class="text-sm font-medium text-danger">{{ $message }}</p>@enderror
-                        <label for="quantity" class="block text-sm font-semibold text-text">Jumlah perubahan
-                            <input id="quantity" name="quantity" type="number" step="1" inputmode="numeric" value="{{ old('quantity') }}" required class="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3 py-2 text-base font-normal text-text shadow-sm focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20" placeholder="Contoh: 10 atau -2">
+                        <fieldset class="space-y-2"><legend class="text-sm font-semibold text-text">Jenis perubahan</legend><div class="grid grid-cols-2 gap-3"><label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold text-text has-[:checked]:border-primary-600 has-[:checked]:bg-primary-50"><input type="radio" name="direction" value="in" @checked(old('direction', 'in') === 'in') class="h-4 w-4 border-border text-primary-700 focus:ring-primary-600">Stok masuk</label><label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold text-text has-[:checked]:border-primary-600 has-[:checked]:bg-primary-50"><input type="radio" name="direction" value="out" @checked(old('direction') === 'out') class="h-4 w-4 border-border text-primary-700 focus:ring-primary-600">Stok keluar</label></div></fieldset>
+                        @error('direction')<p class="text-sm font-medium text-danger">{{ $message }}</p>@enderror
+                        <label for="quantity" class="block text-sm font-semibold text-text">Jumlah barang
+                            <input id="quantity" name="quantity" type="number" min="1" max="4294967295" step="1" inputmode="numeric" value="{{ old('quantity') }}" required class="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3 py-2 text-base font-normal text-text shadow-sm focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20" placeholder="Contoh: 10">
                         </label>
                         @error('quantity')<p class="text-sm font-medium text-danger">{{ $message }}</p>@enderror
+                        <p class="-mt-3 text-xs text-muted">Masukkan jumlah saja. Stok keluar akan ditolak jika melebihi persediaan yang ada.</p>
                         <label for="reason" class="block text-sm font-semibold text-text">Alasan
                             <textarea id="reason" name="reason" rows="3" maxlength="255" required class="mt-1 w-full rounded-xl border border-border bg-surface px-3 py-2 text-base font-normal text-text shadow-sm focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/20" placeholder="Contoh: stok barang masuk dari pemasok">{{ old('reason') }}</textarea>
                         </label>
@@ -209,11 +212,44 @@
 
             @case('stock-history')
                 <x-ui.card class="space-y-5">
-                    <div><p class="text-sm text-muted">Inventaris</p><h2 class="mt-1 text-xl font-bold text-text">Riwayat pergerakan stok</h2><p class="mt-1 text-sm text-muted">Perubahan stok dan alasannya tercatat di halaman ini.</p></div>
-                    @if($stockMovements->isEmpty())
-                        <x-ui.empty-state title="Belum ada pergerakan stok" description="Riwayat akan muncul setelah ada penjualan atau penyesuaian stok." />
+                    <div><p class="text-sm text-muted">Inventaris toko</p><h2 class="mt-1 text-xl font-bold text-text">Manajemen stok</h2><p class="mt-1 text-sm text-muted">Lihat jumlah persediaan, produk yang perlu di-restok, dan aktivitas stok terbaru.</p></div>
+                    @php($trackedProducts = $inventoryProducts->where('track_stock', true))
+                    @php($lowStockCount = $trackedProducts->filter(fn ($product) => $product->stock <= $product->low_stock_threshold)->count())
+                    <div class="grid gap-3 sm:grid-cols-3"><article class="rounded-xl border border-border bg-surface p-4"><p class="text-xs font-medium text-muted">Produk terlacak</p><p class="mt-1 text-2xl font-bold text-text">{{ $trackedProducts->count() }}</p></article><article class="rounded-xl border border-border bg-surface p-4"><p class="text-xs font-medium text-muted">Perlu restok</p><p class="mt-1 text-2xl font-bold {{ $lowStockCount ? 'text-warning' : 'text-text' }}">{{ $lowStockCount }}</p></article><article class="rounded-xl border border-border bg-surface p-4"><p class="text-xs font-medium text-muted">Stok tidak terbatas</p><p class="mt-1 text-2xl font-bold text-text">{{ $inventoryProducts->where('track_stock', false)->count() }}</p></article></div>
+                    <section class="space-y-3"><div class="flex flex-wrap items-center justify-between gap-2"><h3 class="font-bold text-text">Persediaan produk</h3><a href="{{ $screenLink('owner.stock-adjustment', 'stock-adjustment') }}" class="inline-flex min-h-11 items-center rounded-xl border border-border px-3 text-sm font-semibold text-primary-800 hover:bg-primary-50">Sesuaikan stok</a></div>
+                        @if($inventoryProducts->isEmpty())<x-ui.empty-state title="Belum ada produk" description="Produk toko akan muncul di sini setelah ditambahkan." />@else
+                            <div class="grid gap-3 sm:grid-cols-2">@foreach($inventoryProducts as $product)<article class="rounded-xl border border-border bg-surface p-4"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><h4 class="break-words font-semibold text-text">{{ $product->name }}</h4><p class="mt-1 text-xs text-muted">{{ $product->track_stock ? 'Stok saat ini' : 'Persediaan' }}</p></div>@if($product->track_stock)<span class="shrink-0 text-right"><strong class="block text-lg text-text">{{ number_format($product->stock) }}</strong><span class="text-xs text-muted">{{ $product->unit }}</span></span>@else<span class="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">Unlimited</span>@endif</div>@if($product->track_stock)<div class="mt-3 flex items-center justify-between gap-2 border-t border-border/70 pt-3"><span class="text-xs {{ $product->stock <= $product->low_stock_threshold ? 'font-semibold text-warning' : 'text-muted' }}">{{ $product->stock <= $product->low_stock_threshold ? 'Perlu restok' : 'Stok aman' }} · batas {{ $product->low_stock_threshold }}</span><a href="{{ route('owner.stock-adjustment', ['product' => $product->id]) }}" class="inline-flex min-h-10 items-center rounded-lg px-2 text-xs font-bold text-primary-800 hover:bg-primary-50">Ubah stok</a></div>@endif</article>@endforeach</div>
+                        @endif
+                    </section>
+                    <section class="space-y-3 border-t border-border pt-5"><div><h3 class="font-bold text-text">Aktivitas stok</h3><p class="mt-1 text-sm text-muted">50 perubahan terbaru, termasuk transaksi penjualan.</p></div>
+                        @if($stockMovements->isEmpty())<x-ui.empty-state title="Belum ada aktivitas stok" description="Penjualan dan penyesuaian stok akan tercatat di sini." />@else
+                            <div class="space-y-3">@foreach($stockMovements as $movement)<article class="rounded-2xl border border-border/70 bg-surface/70 p-4"><div class="flex flex-wrap items-start justify-between gap-3"><div><h4 class="font-semibold text-text">{{ $movement->product?->name ?? 'Produk' }}</h4><p class="mt-1 text-xs text-muted">{{ $movement->created_at?->timezone(config('app.timezone'))->translatedFormat('j M Y, H:i') }} · {{ $movement->user?->name ?? 'Pengguna' }}</p></div><span class="rounded-full bg-primary-50 px-3 py-1 text-sm font-bold {{ $movement->quantity > 0 ? 'text-success' : 'text-warning' }}">{{ $movement->quantity > 0 ? '+' : '' }}{{ $movement->quantity }}</span></div><p class="mt-3 text-sm text-muted">{{ $movement->reason ?: ucfirst(str_replace('_', ' ', $movement->type->value)) }}</p><p class="mt-1 text-xs text-muted">Stok setelah perubahan: {{ $movement->stock_after }}</p></article>@endforeach</div>
+                        @endif
+                    </section>
+                </x-ui.card>
+                @break
+
+            @case('activity')
+                @php($activities = $activities ?? collect())
+                <x-ui.card class="space-y-5">
+                    <div><p class="text-sm text-muted">Transparansi toko</p><h2 class="mt-1 text-xl font-bold text-text">Log aktivitas</h2><p class="mt-1 text-sm text-muted">Perubahan produk, stok, dan transaksi beserta akun yang melakukannya.</p></div>
+                    @if($activities->isEmpty())
+                        <x-ui.empty-state title="Belum ada aktivitas" description="Aktivitas produk, stok, dan transaksi akan tercatat di sini." />
                     @else
-                        <div class="space-y-3">@foreach($stockMovements as $movement)<article class="rounded-2xl border border-border/70 bg-surface/70 p-4"><div class="flex flex-wrap items-start justify-between gap-3"><div><h3 class="font-semibold text-text">{{ $movement->product?->name ?? 'Produk' }}</h3><p class="mt-1 text-xs text-muted">{{ $movement->created_at?->timezone(config('app.timezone'))->translatedFormat('j M Y, H:i') }} · {{ $movement->user?->name ?? 'Pengguna' }}</p></div><span class="rounded-full bg-primary-50 px-3 py-1 text-sm font-bold {{ $movement->quantity > 0 ? 'text-success' : 'text-warning' }}">{{ $movement->quantity > 0 ? '+' : '' }}{{ $movement->quantity }}</span></div><p class="mt-3 text-sm text-muted">{{ $movement->reason ?: ucfirst(str_replace('_', ' ', $movement->type->value)) }}</p><p class="mt-1 text-xs text-muted">Stok setelah perubahan: {{ $movement->stock_after }}</p></article>@endforeach</div>
+                        <ol class="space-y-3">
+                            @foreach($activities as $activity)
+                                @php($activityLabel = match($activity->action) { 'product.created' => 'Produk ditambahkan', 'product.updated' => 'Produk diubah', 'stock.adjusted' => 'Stok disesuaikan', 'order.paid' => 'Transaksi selesai', default => 'Aktivitas toko' })
+                                <li class="rounded-2xl border border-border/70 bg-surface/70 p-4 sm:p-5">
+                                    <div class="flex flex-wrap items-start justify-between gap-3">
+                                        <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-800">{{ $activityLabel }}</span><span class="font-semibold text-text">{{ $activity->subject_name ?? 'Toko' }}</span></div><p class="mt-2 text-sm text-text">{{ $activity->description }}</p><p class="mt-1 break-all text-xs text-muted">Oleh {{ $activity->actor?->name ?? 'Akun dihapus' }}{{ $activity->actor?->email ? ' · '.$activity->actor->email : '' }}</p></div>
+                                        <time class="shrink-0 text-xs text-muted" datetime="{{ $activity->created_at->toIso8601String() }}">{{ $activity->created_at->timezone(config('app.timezone'))->translatedFormat('j M Y, H:i') }}</time>
+                                    </div>
+                                    @if($activity->action === 'stock.adjusted' && filled(data_get($activity->details, 'reason')))<p class="mt-3 border-t border-border/70 pt-3 text-xs text-muted">Alasan: {{ data_get($activity->details, 'reason') }}</p>@endif
+                                    @if($activity->action === 'order.paid')<p class="mt-3 border-t border-border/70 pt-3 text-xs text-muted">Metode pembayaran: {{ strtoupper(data_get($activity->details, 'payment_method', 'cash')) }}</p>@endif
+                                </li>
+                            @endforeach
+                        </ol>
+                        <p class="text-xs text-muted">Menampilkan maksimal 100 aktivitas terbaru. Catatan aktivitas tidak dapat diubah atau dihapus.</p>
                     @endif
                 </x-ui.card>
                 @break
@@ -397,7 +433,7 @@ MIDTRANS_IS_PRODUCTION=false</code></pre>
                             <a href="{{ $screenLink('owner.appearance', 'appearance') }}" class="flex min-h-14 items-center justify-between gap-3 text-sm font-medium text-text">Tampilan toko <span class="text-muted" aria-hidden="true">→</span></a>
                             <a href="{{ $screenLink('owner.payment-settings', 'payments') }}" class="flex min-h-14 items-center justify-between gap-3 text-sm font-medium text-text">Hubungkan Midtrans <span class="text-muted" aria-hidden="true">→</span></a>
                             <a href="{{ $screenLink('owner.stock-adjustment', 'stock-adjustment') }}" class="flex min-h-14 items-center justify-between gap-3 text-sm font-medium text-text">Penyesuaian stok <span class="text-muted" aria-hidden="true">→</span></a>
-                            <a href="{{ $screenLink('owner.stock-history', 'stock-history') }}" class="flex min-h-14 items-center justify-between gap-3 text-sm font-medium text-text">Riwayat stok <span class="text-muted" aria-hidden="true">→</span></a>
+                            <a href="{{ $screenLink('owner.stock-history', 'stock-history') }}" class="flex min-h-14 items-center justify-between gap-3 text-sm font-medium text-text">Manajemen stok <span class="text-muted" aria-hidden="true">→</span></a>
                         @else
                             <a href="{{ route('profile.edit') }}" class="flex min-h-14 items-center justify-between gap-3 text-sm font-medium text-text">Profil akun <span class="text-muted" aria-hidden="true">→</span></a>
                         @endif

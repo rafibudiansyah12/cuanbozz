@@ -18,7 +18,8 @@ class AdjustProductStockRequest extends FormRequest
     {
         return [
             'product_id' => ['required', 'integer', 'min:1'],
-            'quantity' => ['required', 'integer', 'between:-4294967295,4294967295', 'not_in:0'],
+            'direction' => ['required', 'in:in,out'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:4294967295'],
             'reason' => ['required', 'string', 'max:255'],
         ];
     }

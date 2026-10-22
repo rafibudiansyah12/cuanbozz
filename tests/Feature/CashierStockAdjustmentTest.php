@@ -54,6 +54,7 @@ it('lets a cashier adjust tracked stock with a reason and records the actor', fu
 
     $this->post(route('owner.stock-adjustment.store'), [
         'product_id' => $product->id,
+        'direction' => 'in',
         'quantity' => 4,
         'reason' => 'Barang masuk dari pemasok',
     ])->assertRedirect(route('owner.stock-adjustment', ['product' => $product->id]));
@@ -71,7 +72,8 @@ it('lets a cashier adjust tracked stock with a reason and records the actor', fu
 
     $this->post(route('owner.stock-adjustment.store'), [
         'product_id' => $product->id,
-        'quantity' => -2,
+        'direction' => 'out',
+        'quantity' => 2,
         'reason' => 'Produk rusak',
     ])->assertRedirect(route('owner.stock-adjustment', ['product' => $product->id]));
 
@@ -80,7 +82,8 @@ it('lets a cashier adjust tracked stock with a reason and records the actor', fu
 
     $this->actingAs($owner)->get(route('owner.stock-history'))
         ->assertOk()
-        ->assertSee('Riwayat pergerakan stok')
+        ->assertSee('Manajemen stok')
+        ->assertSee('Aktivitas stok')
         ->assertSee('Barang masuk dari pemasok')
         ->assertSee('Produk rusak')
         ->assertSee($cashier->name);
@@ -98,12 +101,14 @@ it('rejects adjustments that would make stock negative or change untracked stock
 
     $this->post(route('owner.stock-adjustment.store'), [
         'product_id' => $tracked->id,
-        'quantity' => -3,
+        'direction' => 'out',
+        'quantity' => 3,
         'reason' => 'Koreksi stok',
     ])->assertSessionHasErrors('quantity');
 
     $this->post(route('owner.stock-adjustment.store'), [
         'product_id' => $untracked->id,
+        'direction' => 'in',
         'quantity' => 3,
         'reason' => 'Barang masuk',
     ])->assertSessionHasErrors('product_id');
@@ -128,7 +133,8 @@ it('does not allow a cashier to adjust stock from another store', function () {
 
     $this->actingAs($cashier)->post(route('owner.stock-adjustment.store'), [
         'product_id' => $productB->id,
-        'quantity' => -2,
+        'direction' => 'out',
+        'quantity' => 2,
         'reason' => 'Percobaan lintas toko',
     ])->assertNotFound();
 

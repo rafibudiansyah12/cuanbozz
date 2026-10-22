@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Store;
+use App\Models\StoreActivityLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -21,8 +22,9 @@ class OwnerScreenController extends Controller
         'product-form' => 'Tambah produk',
         'categories' => 'Kategori',
         'stock-adjustment' => 'Penyesuaian stok',
-        'stock-history' => 'Riwayat stok',
+        'stock-history' => 'Manajemen stok',
         'orders' => 'Riwayat transaksi',
+        'activity' => 'Log aktivitas',
         'report' => 'Laporan',
         'store-profile' => 'Profil toko',
         'members' => 'Kelola kasir',
@@ -65,6 +67,8 @@ class OwnerScreenController extends Controller
         if ($isAdmin && in_array($screen, self::ADMIN_BLOCKED_SCREENS, true)) {
             abort(403);
         }
+
+        abort_unless($screen !== 'activity' || $isOwner, 403);
 
         $midtransReady = filled(config('services.midtrans.server_key'))
             && filled(config('services.midtrans.client_key'));
@@ -116,6 +120,10 @@ class OwnerScreenController extends Controller
         }
 
         if ($screen === 'stock-history') {
+            $data['inventoryProducts'] = Product::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'unit', 'stock', 'track_stock', 'low_stock_threshold']);
             $data['stockMovements'] = StockMovement::query()
                 ->with(['product', 'user'])
                 ->latest('created_at')
@@ -131,6 +139,14 @@ class OwnerScreenController extends Controller
             }
 
             $data['orders'] = $orders->latest()->limit(50)->get();
+        }
+
+        if ($screen === 'activity') {
+            $data['activities'] = StoreActivityLog::query()
+                ->with('actor')
+                ->latest('created_at')
+                ->limit(100)
+                ->get();
         }
 
         return $this->screen($screen, $store, $members, $isOwner, $isAdmin, false, $midtransReady, $midtransProduction, $data);

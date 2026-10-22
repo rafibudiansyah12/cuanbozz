@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductOptionGroup;
 use App\Models\Store;
+use App\Models\StoreActivityLog;
 use App\Models\User;
 use Database\Seeders\DemoCatalogSeeder;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +95,18 @@ it('lets the owner add a product that a cashier can sell for cash', function () 
         ->assertSee($order->order_number)
         ->assertSee('Rp14.000');
 
+    $this->actingAs($owner)->get(route('owner.activity'))
+        ->assertOk()
+        ->assertSee('Log aktivitas')
+        ->assertSee('Produk ditambahkan')
+        ->assertSee('Transaksi selesai')
+        ->assertSee($cashier->name)
+        ->assertSee($order->order_number);
+
+    $this->actingAs($cashier)->get(route('owner.activity'))->assertForbidden();
+
+    expect(StoreActivityLog::query()->where('store_id', $store->id)->count())->toBe(2);
+
     $this->app['auth']->forgetGuards();
 
     $this->get($receiptUrl)
@@ -117,6 +130,26 @@ it('lets the owner add a product that a cashier can sell for cash', function () 
     ]);
 
     $this->get($crossStoreReceiptUrl)->assertNotFound();
+});
+
+it('keeps owner activity logs isolated between stores', function () {
+    [$ownerA, , $storeA] = cashierSalesStore('Aktivitas A');
+    [$ownerB, , $storeB] = cashierSalesStore('Aktivitas B');
+
+    $this->actingAs($ownerA)->post(route('owner.products.store'), [
+        'name' => 'Produk Rahasia Toko A', 'price' => 1000, 'unit' => 'pcs', 'track_stock' => '0',
+    ])->assertRedirect(route('owner.products'));
+    $this->actingAs($ownerB)->post(route('owner.products.store'), [
+        'name' => 'Produk Toko B', 'price' => 2000, 'unit' => 'pcs', 'track_stock' => '0',
+    ])->assertRedirect(route('owner.products'));
+
+    $this->actingAs($ownerA)->get(route('owner.activity'))
+        ->assertOk()
+        ->assertSee('Produk Rahasia Toko A')
+        ->assertDontSee('Produk Toko B');
+
+    expect(DB::table('store_activity_logs')->where('store_id', $storeA->id)->count())->toBe(1)
+        ->and(DB::table('store_activity_logs')->where('store_id', $storeB->id)->count())->toBe(1);
 });
 
 it('saves selected sizes and toppings as price snapshots on a cash sale', function () {
@@ -216,6 +249,33 @@ it('does not let a cashier create products', function () {
         'unit' => 'pcs',
         'track_stock' => '0',
     ])->assertForbidden();
+});
+
+it('saves unlimited stock products as always available and does not create stock movements on sale', function () {
+    [$owner, $cashier, $store] = cashierSalesStore('Stok Unlimited');
+
+    $this->actingAs($owner)->post(route('owner.products.store'), [
+        'name' => 'Kartu ucapan',
+        'price' => 5000,
+        'unit' => 'pcs',
+        'track_stock' => '0',
+    ])->assertRedirect(route('owner.products'));
+
+    $product = Product::query()->where('store_id', $store->id)->firstOrFail();
+    expect($product->track_stock)->toBeFalse()
+        ->and($product->stock)->toBe(0);
+
+    $this->actingAs($cashier)->get(route('owner.pos'))
+        ->assertOk()
+        ->assertSee('Stok tidak terbatas');
+
+    $this->post(route('owner.checkout.cash'), [
+        'items' => [['product_id' => $product->id, 'quantity' => 2]],
+        'cash_received' => 10000,
+    ])->assertRedirect();
+
+    expect($product->fresh()->stock)->toBe(0)
+        ->and(DB::table('stock_movements')->where('product_id', $product->id)->count())->toBe(0);
 });
 
 it('shows local product photos from the database catalog in the cashier screen', function () {

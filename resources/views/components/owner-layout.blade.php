@@ -18,6 +18,7 @@
         ['group' => 'Katalog', 'label' => 'Produk', 'href' => $screenHref('owner.products', 'products'), 'icon' => 'products', 'active' => request()->routeIs('owner.products*') || request()->route('screen') === 'products'],
         ['group' => 'Katalog', 'label' => 'Kategori', 'href' => $screenHref('owner.categories', 'categories'), 'icon' => 'category', 'active' => request()->routeIs('owner.categories') || request()->route('screen') === 'categories'],
         ['group' => 'Penjualan', 'label' => 'Transaksi', 'href' => $screenHref('owner.orders', 'orders'), 'icon' => 'orders', 'active' => request()->routeIs('owner.orders*') || request()->route('screen') === 'orders'],
+        ['group' => 'Penjualan', 'label' => 'Log aktivitas', 'href' => $screenHref('owner.activity', 'activity'), 'icon' => 'activity', 'active' => request()->routeIs('owner.activity') || request()->route('screen') === 'activity'],
         ['group' => 'Penjualan', 'label' => 'Laporan', 'href' => $screenHref('owner.reports', 'report'), 'icon' => 'report', 'active' => request()->routeIs('owner.reports') || request()->route('screen') === 'report'],
     ] : ($isAdmin ? [
         ['group' => 'Operasional', 'label' => 'Kasir', 'href' => $screenHref('owner.pos', 'pos'), 'icon' => 'cashier', 'active' => request()->routeIs('owner.pos') || request()->route('screen') === 'pos'],
@@ -36,7 +37,7 @@
         ->mapWithKeys(fn (string $group) => [$group => $groupedLinks->get($group)]);
     $inventory = ($isOwner || $isAdmin) ? [
             ['label' => 'Penyesuaian stok', 'href' => $screenHref('owner.stock-adjustment', 'stock-adjustment'), 'screen' => 'stock-adjustment', 'icon' => 'adjustment'],
-            ['label' => 'Riwayat stok', 'href' => $screenHref('owner.stock-history', 'stock-history'), 'screen' => 'stock-history', 'icon' => 'history'],
+            ['label' => 'Manajemen stok', 'href' => $screenHref('owner.stock-history', 'stock-history'), 'screen' => 'stock-history', 'icon' => 'history'],
     ] : [];
     $settings = $isOwner ? [
             ['label' => 'Profil toko', 'href' => $screenHref('owner.store-profile', 'store-profile'), 'screen' => 'store-profile', 'icon' => 'store'],

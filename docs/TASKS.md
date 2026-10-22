@@ -63,9 +63,9 @@ Selesai jika: ada test lintas toko dan nama kategori unik per toko.
 CRUD produk: nama, deskripsi, SKU/barcode, kategori, harga (integer), foto, satuan (default `pcs`), stok, ambang stok, dan `track_stock` (default true).
 Selesai jika: semua field produk tersimpan; kasir hanya bisa melihat produk, tidak bisa mengubah harga; produk `track_stock=false` tidak divalidasi/diperingatkan berdasarkan stok; test lintas toko lulus.
 
-**T2.3 — Pergerakan stok**
-Tabel `stock_movements`, penyesuaian stok manual oleh pemilik/admin/kasir dengan alasan, riwayat per produk dan pelaku.
-Selesai jika: setiap perubahan stok produk yang dilacak tercatat dan stoknya tidak bisa menjadi minus; produk tanpa pelacakan stok tidak menghasilkan pergerakan; kasir hanya dapat menyesuaikan stok di tokonya dan tidak bisa mengubah produk/harga.
+**T2.3 — Pergerakan stok dan log aktivitas toko**
+Tabel `stock_movements`, penyesuaian stok manual oleh pemilik/admin/kasir dengan alasan, riwayat per produk dan pelaku; log aktivitas toko untuk penambahan produk, penyesuaian stok, dan transaksi.
+Selesai jika: setiap perubahan stok produk yang dilacak tercatat dan stoknya tidak bisa menjadi minus; produk tanpa pelacakan stok tidak menghasilkan pergerakan; kasir hanya dapat menyesuaikan stok di tokonya dan tidak bisa mengubah produk/harga; owner dapat melihat akun pelaku dan aktivitas terbaru di tokonya; aktivitas antar toko terisolasi dan log append-only.
 
 **T2.4 — Pencarian dan indikator stok**
 Pencarian, filter kategori, dan penanda stok menipis.

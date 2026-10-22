@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified', 'account.approved'])->group(function () {
     Route::post('/stok/penyesuaian', [StockAdjustmentController::class, 'store'])->name('owner.stock-adjustment.store');
     Route::get('/stok/riwayat', [OwnerScreenController::class, 'show'])->defaults('screen', 'stock-history')->name('owner.stock-history');
     Route::get('/transaksi', [OwnerScreenController::class, 'show'])->defaults('screen', 'orders')->name('owner.orders');
+    Route::get('/aktivitas', [OwnerScreenController::class, 'show'])->defaults('screen', 'activity')->name('owner.activity');
     Route::get('/laporan', [OwnerScreenController::class, 'show'])->defaults('screen', 'report')->name('owner.reports');
     Route::get('/pengaturan/toko', [OwnerScreenController::class, 'show'])->defaults('screen', 'store-profile')->name('owner.store-profile');
     Route::get('/pengaturan/kasir', [OwnerScreenController::class, 'show'])->defaults('screen', 'members')->name('owner.members');

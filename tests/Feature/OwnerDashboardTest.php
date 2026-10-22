@@ -120,7 +120,7 @@ it('renders the owner dashboard without invented sample business data', function
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Beranda')
-        ->assertSee('Ruang usaha Anda')
+        ->assertDontSee('Ruang usaha Anda')
         ->assertSee('Kedai Pemilik')
         ->assertSee('Performa hari ini')
         ->assertSee('Aktivitas 7 hari')
@@ -138,7 +138,7 @@ it('uses the same owner layout across menu screens and shows real store settings
     $this->get(route('owner.products.create'))->assertOk()->assertSee('Informasi produk')->assertSee('Kedai Pemilik');
     $this->get(route('owner.categories'))->assertOk()->assertSee('Kategori produk')->assertSee('Kedai Pemilik');
     $this->get(route('owner.stock-adjustment'))->assertOk()->assertSee('Penyesuaian stok')->assertSee('Kedai Pemilik');
-    $this->get(route('owner.stock-history'))->assertOk()->assertSee('Riwayat pergerakan stok')->assertSee('Kedai Pemilik');
+    $this->get(route('owner.stock-history'))->assertOk()->assertSee('Manajemen stok')->assertSee('Kedai Pemilik');
     $this->get(route('owner.orders'))->assertOk()->assertSee('Riwayat transaksi')->assertSee('Kedai Pemilik');
     $this->get(route('owner.reports'))->assertOk()->assertSee('Laporan penjualan')->assertSee('Kedai Pemilik');
     $this->get(route('owner.store-profile'))->assertOk()->assertSee('Profil toko')->assertSee('Kedai Pemilik');
@@ -146,6 +146,8 @@ it('uses the same owner layout across menu screens and shows real store settings
     $this->get(route('owner.appearance'))->assertOk()->assertSee('Tampilan toko')->assertSee('Kedai Pemilik');
     $this->get(route('owner.payment-settings'))->assertOk()->assertSee('Hubungkan Midtrans')->assertSee('Belum dikonfigurasi');
     $this->get(route('owner.more'))->assertOk()->assertSee('Pintasan sesuai peran')->assertSee('Kedai Pemilik');
+    $this->get(route('owner.more'))->assertSee('Log aktivitas')->assertSee(route('owner.activity'));
+    $this->get(route('owner.activity'))->assertOk()->assertSee('Log aktivitas');
 });
 
 it('shows owner menu screens with honest empty states instead of demo records', function () {

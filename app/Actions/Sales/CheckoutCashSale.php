@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Store;
+use App\Models\StoreActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -161,6 +162,17 @@ class CheckoutCashSale
                     'reason' => 'Penjualan '.$order->order_number,
                 ]);
             }
+
+            StoreActivityLog::query()->create([
+                'store_id' => $store->id,
+                'user_id' => $cashier->id,
+                'action' => 'order.paid',
+                'subject_type' => 'order',
+                'subject_id' => $order->id,
+                'subject_name' => $order->order_number,
+                'description' => 'Menyelesaikan transaksi tunai senilai Rp '.number_format($order->total, 0, ',', '.'),
+                'details' => ['order_number' => $order->order_number, 'total' => $order->total, 'payment_method' => $order->payment_method->value],
+            ]);
 
             return $order->load(['items', 'cashier']);
         }, 3);

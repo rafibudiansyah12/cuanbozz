@@ -38,6 +38,8 @@ erDiagram
     orders ||--o{ payments : "dibayar lewat"
     orders ||--o{ stock_movements : "memicu"
     users ||--o{ stock_movements : "dilakukan oleh"
+    users ||--o{ store_activity_logs : "pelaku"
+    stores ||--o{ store_activity_logs : "mencatat aktivitas"
 
     users {
         bigint id PK
@@ -126,6 +128,18 @@ erDiagram
         int quantity "bertanda"
         int stock_after
         string reason "nullable"
+    }
+    store_activity_logs {
+        bigint id PK
+        bigint store_id FK
+        bigint user_id FK "pelaku"
+        string action "product.created, stock.adjusted, order.paid"
+        string subject_type "nullable"
+        bigint subject_id "nullable; snapshot target"
+        string subject_name "nullable; snapshot nama"
+        text description
+        json details "nullable"
+        timestamp created_at
     }
     orders {
         bigint id PK
@@ -270,7 +284,7 @@ Unique: (`store_id`, `name`).
 
 Unique: (`store_id`, `sku`) bila `sku` terisi. Index: (`store_id`, `name`), (`store_id`, `barcode`).
 
-Produk dengan `track_stock=false` tidak divalidasi terhadap jumlah stok dan tidak menghasilkan baris `stock_movements` saat penjualan atau pembatalan. Produk tersebut juga tidak masuk peringatan stok menipis.
+Produk dengan `track_stock=false` diperlakukan sebagai stok tidak terbatas: produk selalu tersedia, tidak divalidasi terhadap jumlah stok, dan tidak menghasilkan baris `stock_movements` saat penjualan atau pembatalan. Produk tersebut juga tidak masuk peringatan stok menipis.
 
 ### product_option_groups
 

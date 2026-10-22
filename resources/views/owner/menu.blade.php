@@ -10,6 +10,7 @@
     }
 
     if ($isOwner) {
+        $menuItems[] = ['group' => 'Pengelolaan toko', 'title' => 'Log aktivitas', 'description' => 'Lihat siapa yang menambahkan produk, mengubah stok, dan menyelesaikan transaksi.', 'route' => 'owner.activity', 'screen' => 'activity'];
         $menuItems[] = ['group' => 'Pengaturan toko', 'title' => 'Profil toko', 'description' => 'Ubah identitas dan informasi toko.', 'route' => 'owner.store-profile', 'screen' => 'store-profile'];
         $menuItems[] = ['group' => 'Pengaturan toko', 'title' => 'Anggota toko', 'description' => 'Atur akses admin toko dan kasir.', 'route' => 'owner.members', 'screen' => 'members'];
         $menuItems[] = ['group' => 'Pengaturan toko', 'title' => 'Tampilan toko', 'description' => 'Sesuaikan warna dan tampilan aplikasi.', 'route' => 'owner.appearance', 'screen' => 'appearance'];
